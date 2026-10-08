@@ -24,9 +24,7 @@ if platform == 'android':
         Permission.WRITE_EXTERNAL_STORAGE
     ])
 
-CONFIG = {"enabled": False, "fov": 150, "loop_delay": 0.03,
-          "color_lower": [0,0,200], "color_upper": [180,80,255]}
-
+CONFIG = {"enabled": False, "fov": 150}
 state = {"running": True, "overlay": None}
 
 
@@ -38,7 +36,7 @@ class Main(BoxLayout):
             self.rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(pos=self._u, size=self._u)
 
-        self.add_widget(Label(text='AUTO AIMLOCK', font_size='24sp', bold=True,
+        self.add_widget(Label(text='AIMLOCK', font_size='24sp', bold=True,
                               color=(0,1,0.5,1), size_hint_y=None, height=dp(55)))
         self.status = Label(text='OFF', color=(1,0.3,0.3,1),
                             size_hint_y=None, height=dp(35))
@@ -80,7 +78,6 @@ class Main(BoxLayout):
             self.status.color = (0.2,1,0.2,1)
             if platform == 'android':
                 self.show_overlay()
-            threading.Thread(target=self.worker, daemon=True).start()
             Clock.schedule_once(self.go_home, 2.0)
         else:
             CONFIG["enabled"] = False
@@ -99,8 +96,9 @@ class Main(BoxLayout):
             ov.show()
             ov.setFov(CONFIG["fov"])
             state["overlay"] = ov
+            self.log.text = 'Overlay ON'
         except Exception as e:
-            self.log.text = 'Overlay err: ' + str(e)
+            self.log.text = 'Err: ' + str(e)
 
     def hide_overlay(self):
         try:
@@ -120,50 +118,6 @@ class Main(BoxLayout):
             PythonActivity.mActivity.startActivity(h)
         except Exception:
             pass
-
-    def worker(self):
-        try:
-            import cv2
-            import numpy as np
-        except ImportError:
-            self.log.text = 'Missing opencv'
-            return
-        while CONFIG["enabled"] and state["running"]:
-            try:
-                os.system('screencap -p /sdcard/s.png')
-                f = cv2.imread('/sdcard/s.png')
-                if f is None:
-                    time.sleep(0.05)
-                    continue
-                h, w = f.shape[:2]
-                cx, cy = w // 2, h // 2
-                fov = CONFIG["fov"]
-                x1 = max(0, cx - fov); y1 = max(0, cy - fov)
-                x2 = min(w, cx + fov); y2 = min(h, cy + fov)
-                roi = f[y1:y2, x1:x2]
-                hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-                m = cv2.inRange(hsv, np.array(CONFIG["color_lower"]),
-                                np.array(CONFIG["color_upper"]))
-                k = np.ones((5,5), np.uint8)
-                m = cv2.morphologyEx(m, cv2.MORPH_OPEN, k)
-                m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, k)
-                c, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                if c:
-                    big = max(c, key=cv2.contourArea)
-                    if cv2.contourArea(big) > 100:
-                        M = cv2.moments(big)
-                        if M["m00"]:
-                            tx = int(M["m10"]/M["m00"]) + x1
-                            ty = int(M["m01"]/M["m00"]) + y1
-                            if state["overlay"]:
-                                try:
-                                    state["overlay"].setTarget(tx, ty)
-                                except Exception:
-                                    pass
-                            os.system('input tap ' + str(tx) + ' ' + str(ty))
-                time.sleep(CONFIG["loop_delay"])
-            except Exception:
-                time.sleep(0.3)
 
 
 class A(App):

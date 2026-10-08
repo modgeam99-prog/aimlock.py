@@ -12,8 +12,6 @@ from kivy.metrics import dp
 from kivy.graphics import Color, Rectangle
 from kivy.utils import platform
 from jnius import autoclass
-import threading
-import time
 
 if platform == 'android':
     from android.permissions import request_permissions, Permission

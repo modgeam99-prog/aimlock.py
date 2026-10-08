@@ -5,7 +5,7 @@ package.domain = org.aimlock
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,java
 version = 1.0
-requirements = python3,kivy==2.1.0,pyjnius
+requirements = python3,kivy==2.1.0,pyjnius,android
 orientation = portrait
 fullscreen = 0
 android.permissions = SYSTEM_ALERT_WINDOW,FOREGROUND_SERVICE,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
@@ -14,6 +14,6 @@ android.minapi = 24
 android.archs = arm64-v8a
 android.allow_backup = True
 android.accept_sdk_license = True
-p4a.branch = stable
+p4a.branch = develop
 p4a.bootstrap = sdl2
 android.add_src = src
